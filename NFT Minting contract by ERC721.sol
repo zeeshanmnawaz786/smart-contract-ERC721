@@ -24,13 +24,22 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         string metadataHash;
     }
 
+    event whitelistEvent(string name, string hash); 
+    event publicEvent(string name, string hash); 
+    event plateformEvent(string name, string hash); 
+    event publicSaleActive(address owner, string message);
+    event publicSaleUnActive(address owner, string message);
+    event plateformAdd(address owner, address plateformAdmin);
+    event whiteListedAdd(address owner, address whitelistAdd);
+    event whiteListedRemove(address owner, address whitelistRemove);
+
     mapping ( uint => nftInfo) public nftData;
     mapping ( address => bool ) public whitelistedMintMapping;
     mapping ( address => bool ) public plateformMintMapping;
 
     constructor() ERC721("AstroNa", "ASN") {
         baseURI = "https://gateway.pinata.cloud/ipfs/";
-        }
+    }
         
         modifier requireConditions() {
         require(totalSupply() < totalMintLimit, "Not mint any NFT due to limit Exceeed");
@@ -38,7 +47,6 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         _;
     }
    
-
     function pause() public onlyOwner {
         _pause();
     }
@@ -56,12 +64,14 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     @param _tokenID - _name - _metadataHash
     */
 
+
     function whiteListMint( uint _tokenID, string memory _name, string memory _metadataHash) public requireConditions {
         require( whitelistedMintMapping[msg.sender] == true, "you can,t mint NFT");
         require(whiteListLimit !=0, "whitelist Minting limit exceed");
         nftData[_tokenID] = nftInfo(_name, _metadataHash);
         whiteListLimit -= 1;
         _safeMint(msg.sender, _tokenID);
+        emit whitelistEvent(_name, _metadataHash);
     }
 
     /*
@@ -78,6 +88,7 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         require(publicMinting == true,"Public minting not started yet");
         nftData[_tokenID] = nftInfo(_name, _metadataHash);
         _safeMint(msg.sender, _tokenID);
+        emit publicEvent(_name, _metadataHash);
     }
 
     /*
@@ -93,6 +104,7 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         require(plateformLimit !=0, "plateform Minting limit exceed");
         nftData[_tokenID] = nftInfo(_name, _metadataHash);
         _safeMint(msg.sender, _tokenID);
+        emit plateformEvent(_name, _metadataHash);
     }
 
     /*
@@ -108,6 +120,7 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         publicMinting = true;
         publicLimit += whiteListLimit;
         whiteListLimit -= whiteListLimit;
+        emit publicSaleActive(msg.sender, "active public sale");
     }
 
     /*
@@ -117,8 +130,24 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     * - This function can only by the owner address of contract
     */
 
-    function pubSaleUnActive() public onlyOwner{
+    function unActivePublicSale() public onlyOwner{
         publicMinting = false;
+        emit publicSaleUnActive(msg.sender, "un active public sale");
+    }
+
+    /*
+    * @dev addUserplateform is used to add the plateform address to contract
+    *
+    * Requirement:
+    * - This function can only by the owner address of contract
+    *
+    * @param _address
+    */
+
+    function addUserplateform(address _address) public onlyOwner{
+        require( !plateformMintMapping[_address], "address already register in plateform Minyting");
+        plateformMintMapping[_address] = true;
+        emit plateformAdd(msg.sender, _address);
     }
 
     /*
@@ -136,6 +165,7 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         require( numberOfWhitelisted < maxWhitelistedLimit, "whitelist limit exceedd");
         whitelistedMintMapping[_address] = true;
         numberOfWhitelisted ++;
+        emit whiteListedAdd(msg.sender, _address);
     }
 
     /*
@@ -151,21 +181,11 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         require( whitelistedMintMapping[_address], "Address is not a whitelist");
         whitelistedMintMapping[_address] = false;
         numberOfWhitelisted --;
+        emit whiteListedRemove(msg.sender, _address);
+
     }
 
-      /*
-    * @dev addUserplateform is used to add the plateform address to contract
-    *
-    * Requirement:
-    * - This function can only by the owner address of contract
-    *
-    * @param _address
-    */
 
-    function addUserplateform(address _address) public onlyOwner{
-        require( !plateformMintMapping[_address], "address already register in plateform Minyting");
-        plateformMintMapping[_address] = true;
-    }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId)
         internal
