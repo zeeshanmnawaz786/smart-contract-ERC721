@@ -64,7 +64,6 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     @param _tokenID - _name - _metadataHash
     */
 
-
     function whiteListMint( uint _tokenID, string memory _name, string memory _metadataHash) public requireConditions {
         require( whitelistedMintMapping[msg.sender] == true, "you can,t mint NFT");
         require(whiteListLimit !=0, "whitelist Minting limit exceed");
@@ -101,6 +100,7 @@ contract AstroNa is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     */
 
     function plateformMint( uint _tokenID, string memory _name, string memory _metadataHash) public requireConditions {
+        require( plateformMintMapping[msg.sender] == true, "you can,t mint NFT");
         require(plateformLimit !=0, "plateform Minting limit exceed");
         nftData[_tokenID] = nftInfo(_name, _metadataHash);
         _safeMint(msg.sender, _tokenID);
